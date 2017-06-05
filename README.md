@@ -1,0 +1,2 @@
+# EmitConvert
+利用emit将table转为model和将object转成对应的DbParameter
