@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmitConvert.Test", "EmitConvert.Test.csproj", "{B3E92DC5-EE97-44F7-BC14-AA90AB29AB1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JQ.EmitConvert", "..\JQ.EmitConvert\JQ.EmitConvert.csproj", "{52A5FA8C-DE0F-4FF4-A0EE-194ED6CCC0B3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B3E92DC5-EE97-44F7-BC14-AA90AB29AB1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3E92DC5-EE97-44F7-BC14-AA90AB29AB1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3E92DC5-EE97-44F7-BC14-AA90AB29AB1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3E92DC5-EE97-44F7-BC14-AA90AB29AB1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52A5FA8C-DE0F-4FF4-A0EE-194ED6CCC0B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52A5FA8C-DE0F-4FF4-A0EE-194ED6CCC0B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52A5FA8C-DE0F-4FF4-A0EE-194ED6CCC0B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52A5FA8C-DE0F-4FF4-A0EE-194ED6CCC0B3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
