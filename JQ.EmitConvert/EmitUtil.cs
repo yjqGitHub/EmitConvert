@@ -17,25 +17,24 @@ namespace JQ.EmitConvert
     /// </summary>
     public static class EmitUtil
     {
-        private delegate List<TParam> ObjectToParamListDelegate<TParam>(object obj, string sign, string prefix);
-        public static List<TParam> CreateObjectToParamListMethod<TParam>(object obj, string sign, string prefix) where TParam : DbParameter
+        public static DynamicMethod CreateObjectToParamListMethod<TParam>(Type objType) where TParam : DbParameter
         {
             var listType = typeof(List<TParam>);
             var instanceType = typeof(TParam);
             //三个参数，第一个参数是object，第二个参数是参数符号（@,:,?），参数前缀
-            DynamicMethod convertMethod = new DynamicMethod("ConvertObjectToParamList" + obj.GetType().Name, listType, new Type[] { typeof(object), typeof(string), typeof(string) });
+            DynamicMethod convertMethod = new DynamicMethod("ConvertObjectToParamList" + objType.Name, listType, new Type[] { TypeUtil._ObjectType, TypeUtil._StringType, TypeUtil._StringType });
 
             ILGenerator il = convertMethod.GetILGenerator();
             LocalBuilder listBuilder = il.DeclareLocal(listType);//List<T> 存储对象
-
-            var objType = obj.GetType();
+            il.Emit(OpCodes.Newobj, listType.GetConstructor(Type.EmptyTypes));
+            il.Emit(OpCodes.Stloc_S, listBuilder);
 
             LocalBuilder objBuilder = il.DeclareLocal(objType);
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Unbox_Any, objType);
             il.Emit(OpCodes.Stloc, objBuilder);
 
-            LocalBuilder dbNullBuilder = il.DeclareLocal(typeof(object));
+            LocalBuilder dbNullBuilder = il.DeclareLocal(TypeUtil._ObjectType);
             il.Emit(OpCodes.Ldtoken, typeof(DBNull).GetField("Value"));
             il.Emit(OpCodes.Call, typeof(FieldInfo).GetMethod("GetFieldFromHandle", new Type[] { typeof(RuntimeFieldHandle) }));
             il.Emit(OpCodes.Stloc, dbNullBuilder);
@@ -43,82 +42,85 @@ namespace JQ.EmitConvert
             List<PropertyInfo> properties = PropertyUtil.GetTypeProperties(objType);
             foreach (var item in properties)
             {
-                if (item.GetGetMethod(true) != null)
+                Label setDbNullLable = il.DefineLabel();//设置dbnull
+                Label setParamLable = il.DefineLabel();//给param赋值
+                Label exitLable = il.DefineLabel();//退出
+
+                bool isNUllable = item.PropertyType.IsGenericType && item.PropertyType.GetGenericTypeDefinition() == TypeUtil._NullableGenericType;//是否为可空的
+                LocalBuilder paramNameBuilder = il.DeclareLocal(TypeUtil._StringType);//参数变量名字
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldarg_2);
+                if (isNUllable)
                 {
-                    Label setDbNullLable = il.DefineLabel();//设置dbnull
-                    Label setParamLable = il.DefineLabel();//给param赋值
-                    Label exitLable = il.DefineLabel();//退出
+                    il.Emit(OpCodes.Ldstr, item.PropertyType.GetGenericArguments()[0].Name);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldstr, item.Name);
+                }
+                il.Emit(OpCodes.Call, TypeUtil._StringType.GetMethod("Concat", new Type[] { TypeUtil._StringType, TypeUtil._StringType, TypeUtil._StringType }));
+                il.Emit(OpCodes.Stloc, paramNameBuilder);
 
-                    bool isNUllable = item.PropertyType.IsGenericType && item.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>);//是否为可空的
-                    LocalBuilder paramNameBuilder = il.DeclareLocal(typeof(string));//参数变量名字
-                    il.Emit(OpCodes.Ldstr, sign);
-                    il.Emit(OpCodes.Ldstr, prefix);
-                    if (isNUllable)
-                    {
-                        il.Emit(OpCodes.Ldstr, item.PropertyType.GetGenericArguments()[0].Name);
-                    }
-                    else
-                    {
-                        il.Emit(OpCodes.Ldstr, item.Name);
-                    }
-                    il.Emit(OpCodes.Call, typeof(string).GetMethod("Concat", new Type[] { typeof(string), typeof(string), typeof(string) }));
-                    il.Emit(OpCodes.Stloc, paramNameBuilder);
+                LocalBuilder instanceBuilder = il.DeclareLocal(instanceType);// T 存储对象
+                il.Emit(OpCodes.Newobj, instanceType.GetConstructor(Type.EmptyTypes));
+                il.Emit(OpCodes.Stloc_S, instanceBuilder);
 
+                LocalBuilder dbTypeBuilder = il.DeclareLocal(TypeUtil._DbTypeType);
+                Ldc(il, (int)TypeUtil.Type2DbType(item.PropertyType));//数据库类型
+                il.Emit(OpCodes.Stloc, dbTypeBuilder);
 
-                    LocalBuilder instanceBuilder = il.DeclareLocal(instanceType);// T 存储对象
-                    il.Emit(OpCodes.Newobj, instanceType.GetConstructor(Type.EmptyTypes));
-                    il.Emit(OpCodes.Stloc_S, instanceBuilder);
+                //设置dbType
+                il.Emit(OpCodes.Ldloc, instanceBuilder);
+                il.Emit(OpCodes.Ldloc, dbTypeBuilder);
+                il.Emit(OpCodes.Callvirt, instanceType.GetMethod("set_DbType", new Type[] { TypeUtil._DbTypeType }));
+                //设置ParameterName
+                il.Emit(OpCodes.Ldloc, instanceBuilder);
+                il.Emit(OpCodes.Ldloc, paramNameBuilder);
+                il.Emit(OpCodes.Callvirt, instanceType.GetMethod("set_ParameterName", new Type[] { TypeUtil._StringType }));
 
+                il.Emit(OpCodes.Nop);
 
-                    LocalBuilder dbTypeBuilder = il.DeclareLocal(typeof(DbType));
-                    Ldc(il, (int)TypeUtil.Type2DbType(item.PropertyType));//数据库类型
-                    il.Emit(OpCodes.Stloc, dbTypeBuilder);
-
-                    //设置dbType
-                    il.Emit(OpCodes.Ldloc, instanceBuilder);
-                    il.Emit(OpCodes.Ldloc, dbTypeBuilder);
-                    il.Emit(OpCodes.Callvirt, typeof(TParam).GetMethod("set_DbType", new Type[] { typeof(DbType) }));
-                    //设置ParameterName
-                    il.Emit(OpCodes.Ldloc, instanceBuilder);
-                    il.Emit(OpCodes.Ldloc, paramNameBuilder);
-                    il.Emit(OpCodes.Callvirt, typeof(TParam).GetMethod("set_ParameterName", new Type[] { typeof(string) }));
-
-                    il.Emit(OpCodes.Nop);
-
-                    LocalBuilder dbValueBuilder = il.DeclareLocal(typeof(object));
+                LocalBuilder dbValueBuilder = il.DeclareLocal(TypeUtil._ObjectType);
+                if (item.GetGetMethod() == null)
+                {
+                    il.Emit(OpCodes.Br_S, setDbNullLable);
+                }
+                else
+                {
                     il.Emit(OpCodes.Ldloc, objBuilder);
                     il.Emit(OpCodes.Call, item.GetGetMethod());
                     if (item.PropertyType.IsValueType)
                     {
                         il.Emit(OpCodes.Box, item.PropertyType);
+                        if (item.PropertyType.IsEnum)
+                        {
+                            il.Emit(OpCodes.Ldstr, "d");
+                            il.Emit(OpCodes.Call, typeof(Enum).GetMethod("ToString", new Type[] { TypeUtil._StringType }));
+                        }
                     }
                     il.Emit(OpCodes.Stloc, dbValueBuilder);
                     il.Emit(OpCodes.Ldloc, dbValueBuilder);
                     il.Emit(OpCodes.Ldnull);
                     il.Emit(OpCodes.Beq_S, setDbNullLable);
                     il.Emit(OpCodes.Br_S, setParamLable);
-
-                    il.MarkLabel(setDbNullLable);
-                    il.Emit(OpCodes.Ldloc, dbNullBuilder);
-                    il.Emit(OpCodes.Stloc, dbValueBuilder);
-                    il.Emit(OpCodes.Br_S, setParamLable);
-
-                    il.MarkLabel(setParamLable);
-                    il.Emit(OpCodes.Ldloc, instanceBuilder);
-                    il.Emit(OpCodes.Ldloc, dbValueBuilder);
-                    il.Emit(OpCodes.Callvirt, typeof(TParam).GetMethod("set_Value", new Type[] { typeof(object) }));
-                    il.MarkLabel(exitLable);
-
-                    //il.Emit(OpCodes.Ldloc, listBuilder);
-                    //il.Emit(OpCodes.Ldloc, instanceBuilder);
-                    //il.Emit(OpCodes.Call, listType.GetMethod("Add"));
                 }
+                il.MarkLabel(setDbNullLable);
+                il.Emit(OpCodes.Ldloc, dbNullBuilder);
+                il.Emit(OpCodes.Stloc, dbValueBuilder);
+                il.Emit(OpCodes.Br_S, setParamLable);
+
+                il.MarkLabel(setParamLable);
+                il.Emit(OpCodes.Ldloc, instanceBuilder);
+                il.Emit(OpCodes.Ldloc, dbValueBuilder);
+                il.Emit(OpCodes.Callvirt, instanceType.GetMethod("set_Value", new Type[] { TypeUtil._ObjectType }));
+
+                il.Emit(OpCodes.Ldloc, listBuilder);
+                il.Emit(OpCodes.Ldloc, instanceBuilder);
+                il.Emit(OpCodes.Call, listType.GetMethod("Add"));
             }
             il.Emit(OpCodes.Ldloc, listBuilder);
             il.Emit(OpCodes.Ret);
-            var action = (ObjectToParamListDelegate<TParam>)convertMethod.CreateDelegate(typeof(ObjectToParamListDelegate<TParam>));
-            return action(obj, sign, prefix);
-
+            return convertMethod;
         }
 
         #region 根据类型创建Table转List的方法

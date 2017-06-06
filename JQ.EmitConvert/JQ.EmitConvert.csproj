@@ -46,6 +46,7 @@
     <Compile Include="DataTableUtil.cs" />
     <Compile Include="DynamicMethodUtil.cs" />
     <Compile Include="EmitUtil.cs" />
+    <Compile Include="DbParamUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyUtil.cs" />
     <Compile Include="TypeUtil.cs" />

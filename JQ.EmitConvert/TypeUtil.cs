@@ -119,6 +119,13 @@ namespace JQ.EmitConvert
             return type.IsArray || type.IsGenericType;
         }
 
+        public static readonly Type _IntType = typeof(int);
+        public static readonly Type _NullableIntType = typeof(int);
+        public static readonly Type _StringType = typeof(string);
+        public static readonly Type _ObjectType = typeof(object);
+        public static readonly Type _NullableGenericType = typeof(Nullable<>);
+        public static readonly Type _DbTypeType = typeof(DbType);
+
         public static readonly Type[] _BaseTypes = new Type[] {typeof(byte) ,
                           typeof(sbyte),
                           typeof(short),

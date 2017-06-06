@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Data.Common;
 using System.Reflection.Emit;
 
 namespace JQ.EmitConvert
@@ -30,6 +31,16 @@ namespace JQ.EmitConvert
             return _ConvertDataRowToEntityMethodCache.GetValue(typeof(T).TypeHandle, () =>
             {
                 return EmitUtil.CreateDataRowToEntityMethod<T>();
+            });
+        }
+
+        private static ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod> _ObjectToParamListMethodCache = new ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod>();
+
+        public static DynamicMethod GetObjectToParamListMethod<TParam>(Type objType) where TParam : DbParameter
+        {
+            return _ObjectToParamListMethodCache.GetValue(objType.TypeHandle, () =>
+            {
+                return EmitUtil.CreateObjectToParamListMethod<TParam>(objType);
             });
         }
     }

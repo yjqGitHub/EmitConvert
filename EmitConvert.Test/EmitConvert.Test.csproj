@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CodeTimer.cs" />
+    <Compile Include="Test\EmitObjectToParamTest.cs" />
     <Compile Include="Test\EmitRowToEntityTest.cs" />
     <Compile Include="Test\EmitTableToListTest.cs" />
     <Compile Include="PropertyReflectUtil.cs" />
