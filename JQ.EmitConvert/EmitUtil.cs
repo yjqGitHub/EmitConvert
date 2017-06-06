@@ -125,42 +125,44 @@ namespace JQ.EmitConvert
 
             foreach (var item in properties.Where(m => TypeUtil._BaseTypes.Contains(m.PropertyType) || m.PropertyType.IsEnum))
             {
-                Label endIfLabel = il.DefineLabel();
-
-                //判断DataRow是否包含该属性
-
-                il.Emit(OpCodes.Ldloc, currentRowBuilder);
-                il.Emit(OpCodes.Ldstr, item.Name);
-                il.Emit(OpCodes.Call, DataTableUtil.IsContainColumnMethod);
-                il.Emit(OpCodes.Brfalse, endIfLabel);
-
-                //获取该属性在datarow的值
-                il.Emit(OpCodes.Ldloc, instanceBuilder);
-
-                il.Emit(OpCodes.Ldloc, currentRowBuilder);
-                il.Emit(OpCodes.Ldstr, item.Name);
-                il.Emit(OpCodes.Call, DataTableUtil.GetColumnValueMethod);
-
-                //设置值
-                if (item.PropertyType.IsValueType)
+                if (item.GetSetMethod(true) != null)//如果有设置属性的方法
                 {
-                    var convertMethod = ConvertUtil.GetMethodInfo(item.PropertyType);
-                    if (convertMethod == null)
+                    Label endIfLabel = il.DefineLabel();
+
+                    //判断DataRow是否包含该属性
+
+                    il.Emit(OpCodes.Ldloc, currentRowBuilder);
+                    il.Emit(OpCodes.Ldstr, item.Name);
+                    il.Emit(OpCodes.Call, DataTableUtil.IsContainColumnMethod);
+                    il.Emit(OpCodes.Brfalse, endIfLabel);
+
+                    //获取该属性在datarow的值
+                    il.Emit(OpCodes.Ldloc, instanceBuilder);
+
+                    il.Emit(OpCodes.Ldloc, currentRowBuilder);
+                    il.Emit(OpCodes.Ldstr, item.Name);
+                    il.Emit(OpCodes.Call, DataTableUtil.GetColumnValueMethod);
+
+                    //设置值
+                    if (item.PropertyType.IsValueType)
                     {
-                        il.Emit(OpCodes.Unbox_Any, item.PropertyType);//如果是值类型就拆箱
+                        var convertMethod = ConvertUtil.GetMethodInfo(item.PropertyType);
+                        if (convertMethod == null)
+                        {
+                            il.Emit(OpCodes.Unbox_Any, item.PropertyType);//如果是值类型就拆箱
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Call, convertMethod);
+                        }
                     }
                     else
                     {
-                        il.Emit(OpCodes.Call, convertMethod);
+                        il.Emit(OpCodes.Castclass, item.PropertyType);
                     }
+                    il.Emit(OpCodes.Callvirt, item.GetSetMethod(true));
+                    il.MarkLabel(endIfLabel);
                 }
-                else
-                {
-                    il.Emit(OpCodes.Castclass, item.PropertyType);
-                }
-                il.Emit(OpCodes.Callvirt, item.GetSetMethod(true));
-
-                il.MarkLabel(endIfLabel);
             }
 
             foreach (var item in properties.Where(m => !(TypeUtil._BaseTypes.Contains(m.PropertyType) || m.PropertyType.IsEnum)))
@@ -170,15 +172,18 @@ namespace JQ.EmitConvert
                 }
                 else
                 {
-                    LocalBuilder instanceProperty = il.DeclareLocal(item.PropertyType);
-                    il.Emit(OpCodes.Newobj, item.PropertyType.GetConstructor(Type.EmptyTypes));
-                    il.Emit(OpCodes.Stloc, instanceProperty);
-                    SetDataRowIL(item.PropertyType, il, currentRowBuilder, instanceProperty);
+                    if (item.GetSetMethod(true) != null)
+                    {
+                        LocalBuilder instanceProperty = il.DeclareLocal(item.PropertyType);
+                        il.Emit(OpCodes.Newobj, item.PropertyType.GetConstructor(Type.EmptyTypes));
+                        il.Emit(OpCodes.Stloc, instanceProperty);
+                        SetDataRowIL(item.PropertyType, il, currentRowBuilder, instanceProperty);
 
-                    il.Emit(OpCodes.Ldloc, instanceBuilder);
-                    il.Emit(OpCodes.Ldloc, instanceProperty);
-                    il.Emit(OpCodes.Castclass, item.PropertyType);
-                    il.Emit(OpCodes.Callvirt, item.GetSetMethod(true));
+                        il.Emit(OpCodes.Ldloc, instanceBuilder);
+                        il.Emit(OpCodes.Ldloc, instanceProperty);
+                        il.Emit(OpCodes.Castclass, item.PropertyType);
+                        il.Emit(OpCodes.Callvirt, item.GetSetMethod(true));
+                    }
                 }
             }
         }
