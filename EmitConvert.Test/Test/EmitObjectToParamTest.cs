@@ -28,10 +28,10 @@ namespace EmitConvert.Test.Test
                 Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
             }
             var paramList2 = DbParamUtil.ToDbParam<SqlParameter>(new TestClaa(), "@", "w_");
-            //foreach (var item in paramList2)
-            //{
-            //    Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
-            //}
+            foreach (var item in paramList2)
+            {
+                Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
+            }
             var paramList3 = DbParamUtil.ToDbParam<SqlParameter>(new TestParam2(22), "@", "w_");
             //foreach (var item in paramList3)
             //{

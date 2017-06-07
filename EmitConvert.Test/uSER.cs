@@ -10,12 +10,8 @@ namespace EmitConvert.Test
     /// 类功能描述：Port
     /// 创建标识：yjq 2017/6/5 20:18:11
     /// </summary>
-    public class User
+    public struct User
     {
-        public User()
-        {
-        }
-
         public double? Id { get; set; }
         public string Name { get; set; }
         public bool Sex { get; set; }
@@ -39,7 +35,7 @@ namespace EmitConvert.Test
 
         public override string ToString()
         {
-            return $"{Id},{Name},{Sex},{Uid},{Time},{SexText},{SourcePort},{Product?.ToString()}";
+            return $"{Id},{Name},{Sex},{Uid},{Time},{SexText},{SourcePort},{Product.ToString()}";
         }
 
         static public DataTable GetUserList(int count)
@@ -54,7 +50,7 @@ namespace EmitConvert.Test
             table.Columns.Add("ProductId");
             table.Columns.Add("ProductName");
             table.Columns.Add("ProductPrice");
-            table.Columns.Add("ProductAddTime", typeof(object));
+            table.Columns.Add("ProductAddTime");
             for (int i = 0; i < count; i++)
             {
                 table.Rows.Add(i, "blqw" + i, true, Guid.NewGuid(), DateTime.Now, i < 10 ? Port.APP : Port.PC, i, "product" + i.ToString(), i, DateTime.Now);

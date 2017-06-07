@@ -15,7 +15,11 @@ namespace EmitConvert.Test
     {
         public void Action()
         {
-            User.GetUserList(100).ToList<User>();
+            var userList =User.GetUserList(1).ToList<User>();
+            foreach (var item in userList)
+            {
+                Console.WriteLine(item.ToString());
+            }
         }
     }
 }

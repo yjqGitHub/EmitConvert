@@ -45,6 +45,7 @@
     <Compile Include="ConvertUtil.cs" />
     <Compile Include="DataTableUtil.cs" />
     <Compile Include="DynamicMethodUtil.cs" />
+    <Compile Include="EmitBuilderUtil.cs" />
     <Compile Include="EmitUtil.cs" />
     <Compile Include="DbParamUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
