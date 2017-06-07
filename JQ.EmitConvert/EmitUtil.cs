@@ -22,7 +22,7 @@ namespace JQ.EmitConvert
             var listType = typeof(List<TParam>);
             var instanceType = typeof(TParam);
             //三个参数，第一个参数是object，第二个参数是参数符号（@,:,?），参数前缀
-            DynamicMethod convertMethod = new DynamicMethod("ConvertObjectToParamList" + objType.Name, listType, new Type[] { TypeUtil._ObjectType, TypeUtil._StringType, TypeUtil._StringType });
+            DynamicMethod convertMethod = new DynamicMethod("ConvertObjectToParamList" + objType.Name, listType, new Type[] { TypeUtil._ObjectType, TypeUtil._StringType, TypeUtil._StringType }, true);
 
             ILGenerator il = convertMethod.GetILGenerator();
             LocalBuilder listBuilder = il.DeclareLocal(listType);//List<T> 存储对象
@@ -135,7 +135,7 @@ namespace JQ.EmitConvert
         {
             var listType = typeof(List<T>);
             var instanceType = typeof(T);
-            DynamicMethod convertMethod = new DynamicMethod("ConvertListMethod" + instanceType.Name, listType, new Type[] { typeof(DataTable) });
+            DynamicMethod convertMethod = new DynamicMethod("ConvertListMethod" + instanceType.Name, listType, new Type[] { typeof(DataTable) },true);
 
             ILGenerator il = convertMethod.GetILGenerator();
 

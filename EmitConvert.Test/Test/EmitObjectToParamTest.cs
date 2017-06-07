@@ -15,7 +15,12 @@ namespace EmitConvert.Test.Test
     {
         public void Action()
         {
-            var paramList = DbParamUtil.ToDbParam<SqlParameter>(new User(), "@", "w_");
+            var obj = new { Id = 1, Name = 2 };
+            var paramList = DbParamUtil.ToDbParam<SqlParameter>(obj, "@", "w_");
+            foreach (var item in paramList)
+            {
+                Console.WriteLine($"{item.ParameterName}");
+            }
         }
     }
 }
