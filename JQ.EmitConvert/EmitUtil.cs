@@ -31,12 +31,18 @@ namespace JQ.EmitConvert
 
             LocalBuilder objBuilder = il.DeclareLocal(objType);
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Unbox_Any, objType);
+            if (objType.IsValueType)
+            {
+                il.Emit(OpCodes.Unbox_Any, objType);
+            }
+            else
+            {
+                il.Emit(OpCodes.Castclass, objType);
+            }
             il.Emit(OpCodes.Stloc, objBuilder);
 
             LocalBuilder dbNullBuilder = il.DeclareLocal(TypeUtil._ObjectType);
-            il.Emit(OpCodes.Ldtoken, typeof(DBNull).GetField("Value"));
-            il.Emit(OpCodes.Call, typeof(FieldInfo).GetMethod("GetFieldFromHandle", new Type[] { typeof(RuntimeFieldHandle) }));
+            il.Emit(OpCodes.Ldsfld, typeof(DBNull).GetField("Value"));
             il.Emit(OpCodes.Stloc, dbNullBuilder);
 
             List<PropertyInfo> properties = PropertyUtil.GetTypeProperties(objType);
@@ -46,18 +52,10 @@ namespace JQ.EmitConvert
                 Label setParamLable = il.DefineLabel();//给param赋值
                 Label exitLable = il.DefineLabel();//退出
 
-                bool isNUllable = item.PropertyType.IsGenericType && item.PropertyType.GetGenericTypeDefinition() == TypeUtil._NullableGenericType;//是否为可空的
                 LocalBuilder paramNameBuilder = il.DeclareLocal(TypeUtil._StringType);//参数变量名字
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldarg_2);
-                if (isNUllable)
-                {
-                    il.Emit(OpCodes.Ldstr, item.PropertyType.GetGenericArguments()[0].Name);
-                }
-                else
-                {
-                    il.Emit(OpCodes.Ldstr, item.Name);
-                }
+                il.Emit(OpCodes.Ldstr, item.Name);
                 il.Emit(OpCodes.Call, TypeUtil._StringType.GetMethod("Concat", new Type[] { TypeUtil._StringType, TypeUtil._StringType, TypeUtil._StringType }));
                 il.Emit(OpCodes.Stloc, paramNameBuilder);
 
@@ -88,7 +86,21 @@ namespace JQ.EmitConvert
                 else
                 {
                     il.Emit(OpCodes.Ldloc, objBuilder);
-                    il.Emit(OpCodes.Call, item.GetGetMethod());
+                    if (item.DeclaringType.IsValueType && Nullable.GetUnderlyingType(item.DeclaringType) == null)
+                    {
+                        var t = il.DeclareLocal(item.DeclaringType);
+                        il.Emit(OpCodes.Stloc, t);
+                        il.Emit(OpCodes.Ldloca_S, t);
+                    }
+                    if (item.DeclaringType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Call, item.GetGetMethod());
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Callvirt, item.GetGetMethod());
+                    }
+
                     if (item.PropertyType.IsValueType)
                     {
                         il.Emit(OpCodes.Box, item.PropertyType);
@@ -135,7 +147,7 @@ namespace JQ.EmitConvert
         {
             var listType = typeof(List<T>);
             var instanceType = typeof(T);
-            DynamicMethod convertMethod = new DynamicMethod("ConvertListMethod" + instanceType.Name, listType, new Type[] { typeof(DataTable) },true);
+            DynamicMethod convertMethod = new DynamicMethod("ConvertListMethod" + instanceType.Name, listType, new Type[] { typeof(DataTable) }, true);
 
             ILGenerator il = convertMethod.GetILGenerator();
 
@@ -265,6 +277,7 @@ namespace JQ.EmitConvert
                     }
                     else
                     {
+                        //il.Emit(OpCodes.Box, item.PropertyType);
                         il.Emit(OpCodes.Castclass, item.PropertyType);
                     }
                     il.Emit(OpCodes.Callvirt, item.GetSetMethod(true));

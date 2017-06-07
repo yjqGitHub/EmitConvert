@@ -24,7 +24,7 @@ namespace EmitConvert.Test
             //CodeTimer.Time("EmitObjectToParamTest_100000", 100000, new EmitObjectToParamTest());
             //CodeTimer.Time("EmitObjectToParamTest_100000", 100000, new EmitObjectToParamTest());
 
-            //CodeTimer.Time("EmitToTableTest_10000", 10000, new EmitTableToListTest());
+            CodeTimer.Time("EmitToTableTest_10000", 5, new EmitTableToListTest());
             //CodeTimer.Time("PropertyReflectUtilTableToListTest_10000", 10000, new PropertyReflectUtilTableToListTest());
 
             //CodeTimer.Time("EmitToTableTest_50000", 50000, new EmitTableToListTest());
