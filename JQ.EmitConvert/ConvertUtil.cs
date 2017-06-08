@@ -48,7 +48,8 @@ namespace JQ.EmitConvert
                 [typeof(float?).TypeHandle] = typeof(ConvertUtil).GetMethod("ToNFloat", new Type[] { typeof(object) }),
                 [typeof(char?).TypeHandle] = typeof(ConvertUtil).GetMethod("ToNChar", new Type[] { typeof(object) }),
                 [typeof(Guid?).TypeHandle] = typeof(ConvertUtil).GetMethod("ToNGuid", new Type[] { typeof(object) }),
-                [typeof(DateTime?).TypeHandle] = typeof(ConvertUtil).GetMethod("ToNDateTime", new Type[] { typeof(object) })
+                [typeof(DateTime?).TypeHandle] = typeof(ConvertUtil).GetMethod("ToNDateTime", new Type[] { typeof(object) }),
+                [typeof(string).TypeHandle] = typeof(ConvertUtil).GetMethod("ToString", new Type[] { typeof(object) })
             };
         }
 
@@ -447,6 +448,15 @@ namespace JQ.EmitConvert
                 return (DateTime)value;
             }
             return Convert.ToDateTime(value);
+        }
+
+        public static string ToString(object value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+            return value.ToString();
         }
     }
 }

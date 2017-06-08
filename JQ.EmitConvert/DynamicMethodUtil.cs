@@ -34,14 +34,33 @@ namespace JQ.EmitConvert
             });
         }
 
-        private static ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod> _ObjectToParamListMethodCache = new ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod>();
+        private static ConcurrentDictionary<RuntimeTypeHandle, ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod>> _ObjectToParamListMethodCache = new ConcurrentDictionary<RuntimeTypeHandle, ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod>>();
 
         public static DynamicMethod GetObjectToParamListMethod<TParam>(Type objType) where TParam : DbParameter
         {
-            return _ObjectToParamListMethodCache.GetValue(objType.TypeHandle, () =>
+            ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod> objectToParamListMethod;
+            _ObjectToParamListMethodCache.TryGetValue(objType.TypeHandle, out objectToParamListMethod);
+            if (objectToParamListMethod != null)
             {
-                return EmitUtil.CreateObjectToParamListMethod<TParam>(objType);
-            });
+                DynamicMethod method;
+                objectToParamListMethod.TryGetValue(typeof(TParam).TypeHandle, out method);
+                if (method == null)
+                {
+                    method = EmitUtil.CreateObjectToParamListMethod<TParam>(objType);
+                    objectToParamListMethod.TryAdd(typeof(TParam).TypeHandle, method);
+                    _ObjectToParamListMethodCache[objType.TypeHandle] = objectToParamListMethod;
+                }
+                return method;
+            }
+            else
+            {
+                objectToParamListMethod = new ConcurrentDictionary<RuntimeTypeHandle, DynamicMethod>();
+                DynamicMethod method = EmitUtil.CreateObjectToParamListMethod<TParam>(objType);
+                objectToParamListMethod.TryAdd(typeof(TParam).TypeHandle, method);
+                _ObjectToParamListMethodCache[objType.TypeHandle] = objectToParamListMethod;
+                return method;
+            }
+
         }
     }
 }

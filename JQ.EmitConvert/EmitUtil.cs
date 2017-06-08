@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Linq;
 
 namespace JQ.EmitConvert
 {
@@ -67,7 +68,8 @@ namespace JQ.EmitConvert
                 il.Emit(OpCodes.Nop);
 
                 LocalBuilder dbValueBuilder = il.DeclareLocal(TypeUtil._ObjectType);
-                if (item.GetGetMethod() == null)
+                var getMethod = item.GetGetMethod(true);
+                if (getMethod == null)
                 {
                     il.Emit(OpCodes.Br_S, setDbNullLable);
                 }
@@ -82,11 +84,11 @@ namespace JQ.EmitConvert
                     }
                     if (item.DeclaringType.IsValueType)
                     {
-                        il.Emit(OpCodes.Call, item.GetGetMethod());
+                        il.Emit(OpCodes.Call, getMethod);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Callvirt, item.GetGetMethod());
+                        il.Emit(OpCodes.Callvirt, getMethod);
                     }
 
                     if (item.PropertyType.IsValueType)
@@ -221,5 +223,40 @@ namespace JQ.EmitConvert
         }
 
         #endregion 根据类型创建Datarow转Model的方法
+
+        public static DynamicMethod CreateClassCastMethod<TFrom, TTartget>()
+        {
+            var typeFrom = typeof(TFrom);
+            var typeTarget = typeof(TTartget);
+            DynamicMethod method = new DynamicMethod("ClassCast" + typeFrom.Name, typeTarget, new Type[] { typeFrom }, true);
+
+            ILGenerator il = method.GetILGenerator();
+
+            var targetLocalBuilder = il.DeclareLocal(typeTarget);
+            il.SetDefaultObjectValue(typeTarget, targetLocalBuilder);
+
+            var fromPropertyList = PropertyUtil.GetTypeProperties(typeFrom);
+            var targetPropertyList = PropertyUtil.GetTypeProperties(typeTarget);
+
+            foreach (var targetProperty in targetPropertyList)
+            {
+                var formProperty = fromPropertyList.Where(m => m.Name.Equals(targetProperty.Name, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+                if (formProperty != null)
+                {
+                    var getMethod = formProperty.GetGetMethod(true);
+                    if (getMethod != null)
+                    {
+                        var setMehtod = targetProperty.GetSetMethod(true);
+                        if (setMehtod != null)
+                        {
+                            il.Emit(OpCodes.Ldarg_0);
+                            il.SetGetValueIL(formProperty, getMethod);
+                        }
+                    }
+                }
+            }
+
+            return method;
+        }
     }
 }

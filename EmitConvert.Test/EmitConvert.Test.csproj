@@ -50,6 +50,7 @@
     <Compile Include="PropertyReflectUtil.cs" />
     <Compile Include="Test\PropertyReflectUtilRowToEntityTest.cs" />
     <Compile Include="Test\PropertyReflectUtilTableToListTest.cs" />
+    <Compile Include="Test\ReflectPropertyToParamTest.cs" />
     <Compile Include="User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

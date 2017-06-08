@@ -10,18 +10,18 @@ namespace EmitConvert.Test
     /// 类功能描述：Port
     /// 创建标识：yjq 2017/6/5 20:18:11
     /// </summary>
-    public struct User
+    public class User
     {
         public double? Id { get; set; }
         public string Name { get; set; }
         public bool Sex { get; set; }
-        public Guid Uid { get; set; }
-        public Port SourcePort { get; set; }
+        public Guid Uid { private get; set; }
+        public Port SourcePort { get; private set; }
         public DateTime? Time { get; set; }
 
         public string SexText
         {
-            get
+            private get
             {
                 return Sex ? "男" : "女";
             }

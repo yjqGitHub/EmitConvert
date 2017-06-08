@@ -15,24 +15,25 @@ namespace EmitConvert.Test.Test
     {
         public void Action()
         {
-            int? id = 9;
-            var obj = new { Id = id, Name = 2 };
-            var paramList = DbParamUtil.ToDbParam<SqlParameter>(obj, "@", "w_");
-            foreach (var item in paramList)
-            {
-                Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
-            }
-            var paramList1 = DbParamUtil.ToDbParam<SqlParameter>(new User(), "@", "w_");
+            //int? id = 9;
+            //var obj = new { Id = id, Name = 2 };
+            //var paramList = DbParamUtil.ToDbParam<SqlParameter>(obj, "@", "w_");
+            //foreach (var item in paramList)
+            //{
+            //    Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
+            //}
+            User user = new EmitConvert.Test.User { Id = 1, Name = "234", Product = new EmitConvert.Test.Product { ProductAddTime = DateTime.Now, ProductId = 8, ProductName = "ddf", ProductPrice = (decimal)25.6 }, Sex = false, Time = DateTime.Now, Uid = Guid.NewGuid() };
+            var paramList1 = DbParamUtil.ToDbParam<SqlParameter>(user, "@", "w_");
             foreach (var item in paramList1)
             {
                 Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
             }
-            var paramList2 = DbParamUtil.ToDbParam<SqlParameter>(new TestClaa(), "@", "w_");
-            foreach (var item in paramList2)
-            {
-                Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
-            }
-            var paramList3 = DbParamUtil.ToDbParam<SqlParameter>(new TestParam2(22), "@", "w_");
+            //var paramList2 = DbParamUtil.ToDbParam<SqlParameter>(new TestClaa(), "@", "w_");
+            //foreach (var item in paramList2)
+            //{
+            //    Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");
+            //}
+            //var paramList3 = DbParamUtil.ToDbParam<SqlParameter>(new TestParam2(22), "@", "w_");
             //foreach (var item in paramList3)
             //{
             //    Console.WriteLine($"{item.ParameterName},{item.DbType},{item.Value}");

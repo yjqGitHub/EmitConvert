@@ -77,21 +77,21 @@ namespace JQ.EmitConvert
         /// <param name="propertyType">属性类型</param>
         public static void ConvertValue(this ILGenerator il, Type propertyType)
         {
-            if (propertyType.IsValueType)
+            var convertMethod = ConvertUtil.GetMethodInfo(propertyType);
+            if (convertMethod == null)
             {
-                var convertMethod = ConvertUtil.GetMethodInfo(propertyType);
-                if (convertMethod == null)
+                if (propertyType.IsValueType)
                 {
                     il.Emit(OpCodes.Unbox_Any, propertyType);//如果是值类型就拆箱
                 }
                 else
                 {
-                    il.Emit(OpCodes.Call, convertMethod);
+                    il.Emit(OpCodes.Castclass, propertyType);
                 }
             }
             else
             {
-                il.Emit(OpCodes.Castclass, propertyType);
+                il.Emit(OpCodes.Call, convertMethod);
             }
         }
 
@@ -231,6 +231,24 @@ namespace JQ.EmitConvert
             else
             {
                 il.Emit(OpCodes.Castclass, objType);
+            }
+        }
+
+        public static void SetGetValueIL(this ILGenerator il, PropertyInfo property, MethodInfo getMethod)
+        {
+            if (property.DeclaringType.IsValueType && Nullable.GetUnderlyingType(property.DeclaringType) == null)
+            {
+                var t = il.DeclareLocal(property.DeclaringType);
+                il.Emit(OpCodes.Stloc, t);
+                il.Emit(OpCodes.Ldloca_S, t);
+            }
+            if (property.DeclaringType.IsValueType)
+            {
+                il.Emit(OpCodes.Call, getMethod);
+            }
+            else
+            {
+                il.Emit(OpCodes.Callvirt, getMethod);
             }
         }
     }
